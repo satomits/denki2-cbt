@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}間違い復習{% endblock %}
+
+{% block content %}
+<div class="review-container">
+    <h2>間違えた問題一覧</h2>
+
+    {% if wrong_attempts %}
+    <p>{{ wrong_attempts|length }} 問の間違いがあります。</p>
+
+    <form action="{{ url_for('quiz_start') }}" method="post">
+        <input type="hidden" name="mode" value="review">
+        <div class="form-group">
+            <label>出題数</label>
+            <select name="count">
+                <option value="10">10問</option>
+                <option value="20">20問</option>
+                <option value="{{ wrong_attempts|length }}" selected>すべて（{{ wrong_attempts|length }}問）</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">復習を開始</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr><th>年度</th><th>問題番号</th><th>分野</th><th>最終回答日</th></tr>
+        </thead>
+        <tbody>
+            {% for a in wrong_attempts %}
+            <tr>
+                <td>{{ a.question.year }}年 {{ "上期" if a.question.half == "upper" else "下期" }}</td>
+                <td>問{{ a.question.number }}</td>
+                <td>
+                    {% for tag in a.question.tags %}
+                    <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </td>
+                <td>{{ a.created_at.strftime('%m/%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>間違えた問題はありません。</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}結果{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <h2>結果</h2>
+
+    <div class="result-summary">
+        <div class="score">
+            <span class="score-num">{{ session.correct_count }}</span>
+            <span class="score-sep">/</span>
+            <span class="score-den">{{ session.total_count }}</span>
+        </div>
+        <div class="score-percent">
+            {{ (session.correct_count / session.total_count * 100)|round|int if session.total_count else 0 }}%
+        </div>
+        <p class="pass-line">
+            {% if session.total_count and (session.correct_count / session.total_count) >= 0.6 %}
+                合格ライン（60%）クリア
+            {% else %}
+                合格ライン（60%）未達
+            {% endif %}
+        </p>
+    </div>
+
+    {% if tag_stats %}
+    <h3>分野別成績</h3>
+    <table>
+        <thead>
+            <tr><th>分野</th><th>正答</th><th>正答率</th></tr>
+        </thead>
+        <tbody>
+            {% for tag, stats in tag_stats.items()|sort %}
+            <tr>
+                <td>{{ tag }}</td>
+                <td>{{ stats.correct }}/{{ stats.total }}</td>
+                <td>{{ (stats.correct / stats.total * 100)|round|int if stats.total else 0 }}%</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <h3>問題一覧</h3>
+    <table>
+        <thead>
+            <tr><th>#</th><th>問題</th><th>あなたの回答</th><th>正解</th><th>結果</th></tr>
+        </thead>
+        <tbody>
+            {% set labels = ["イ", "ロ", "ハ", "ニ"] %}
+            {% for a in attempts %}
+            <tr class="{{ 'correct' if a.is_correct else 'wrong' }}">
+                <td>{{ loop.index }}</td>
+                <td>問{{ a.question.number }}</td>
+                <td>{{ labels[a.selected] if a.selected is not none else "未回答" }}</td>
+                <td>{{ labels[a.question.answer] if a.question.answer is not none else "?" }}</td>
+                <td>{{ "○" if a.is_correct else "✕" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="result-actions">
+        <a href="{{ url_for('index') }}" class="btn">ホームに戻る</a>
+        <form action="{{ url_for('quiz_start') }}" method="post" style="display:inline">
+            <input type="hidden" name="mode" value="review">
+            <button type="submit" class="btn btn-primary">間違えた問題を復習</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

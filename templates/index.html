@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="start-form">
+    <h2>出題設定</h2>
+    <form action="{{ url_for('quiz_start') }}" method="post">
+        <div class="form-group">
+            <label>年度・回</label>
+            <select name="year" id="year-select">
+                <option value="">すべて</option>
+                {% for y, h in years %}
+                <option value="{{ y }}" data-half="{{ h }}">
+                    {{ y }}年 {{ "上期" if h == "upper" else "下期" }}
+                </option>
+                {% endfor %}
+            </select>
+            <input type="hidden" name="half" id="half-input">
+        </div>
+
+        <div class="form-group">
+            <label>分野</label>
+            <select name="tag">
+                <option value="">すべて</option>
+                {% for tag in tags %}
+                <option value="{{ tag }}">{{ tag }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>出題数</label>
+            <select name="count">
+                <option value="10">10問</option>
+                <option value="20">20問</option>
+                <option value="30">30問</option>
+                <option value="50" selected>50問（本番同等）</option>
+            </select>
+        </div>
+
+        <input type="hidden" name="mode" value="normal">
+        <button type="submit" class="btn btn-primary">開始</button>
+    </form>
+</section>
+
+{% if recent_sessions %}
+<section class="history">
+    <h2>最近の成績</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>日時</th>
+                <th>カテゴリ</th>
+                <th>正答率</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in recent_sessions %}
+            <tr>
+                <td>{{ s.started_at.strftime('%m/%d %H:%M') }}</td>
+                <td>{{ s.category }}</td>
+                <td>
+                    {% if s.finished_at %}
+                        {{ s.correct_count }}/{{ s.total_count }}
+                        ({{ (s.correct_count / s.total_count * 100)|round|int if s.total_count else 0 }}%)
+                    {% else %}
+                        進行中
+                    {% endif %}
+                </td>
+                <td>
+                    {% if s.finished_at %}
+                        <a href="{{ url_for('result', session_id=s.id) }}">詳細</a>
+                    {% else %}
+                        <a href="{{ url_for('quiz', session_id=s.id, q=0) }}">再開</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+<script>
+document.getElementById('year-select').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    document.getElementById('half-input').value = opt.dataset.half || '';
+});
+</script>
+{% endblock %}

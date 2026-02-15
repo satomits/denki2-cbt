@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}問{{ q_index + 1 }} / {{ q_total }}{% endblock %}
+
+{% block content %}
+<div class="quiz-container">
+    <div class="quiz-header">
+        <div class="quiz-progress">
+            問 {{ q_index + 1 }} / {{ q_total }}
+            （{{ question.year }}年 {{ "上期" if question.half == "upper" else "下期" }} 問{{ question.number }}）
+        </div>
+        <div class="quiz-tags">
+            {% for tag in question.tags %}
+            <span class="tag">{{ tag }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if question.is_haisen %}
+    <!-- 配線図セクション: 注意事項 + 図面ビューア -->
+    <div class="haisen-tools">
+        <button class="btn btn-notes" onclick="toggleNotes()">注意事項</button>
+        <button class="btn btn-diagram" onclick="openDiagram()">配線図を開く</button>
+    </div>
+
+    <div id="haisen-notes" class="haisen-notes" style="display:none;">
+        <img src="{{ url_for('static', filename=question.haisen_notes_path) }}"
+             alt="配線図 注意事項">
+    </div>
+
+    <!-- 配線図モーダル -->
+    <div id="diagram-modal" class="diagram-modal" style="display:none;">
+        <div class="diagram-modal-header">
+            <span>配線図（スクロール: 拡大縮小 / ドラッグ: 移動）</span>
+            <button class="btn-close" onclick="closeDiagram()">&times;</button>
+        </div>
+        <div class="diagram-viewport" id="diagram-viewport">
+            <img id="diagram-img"
+                 src="{{ url_for('static', filename=question.haisen_diagram_path) }}"
+                 alt="配線図"
+                 draggable="false">
+        </div>
+        <div class="diagram-controls">
+            <button class="btn" onclick="zoomDiagram(-0.2)">−</button>
+            <span id="zoom-level">100%</span>
+            <button class="btn" onclick="zoomDiagram(0.2)">＋</button>
+            <button class="btn" onclick="resetDiagram()">リセット</button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- 問題画像（クロップ済み） -->
+    <div class="question-image">
+        <img src="{{ url_for('static', filename=question.image_path) }}"
+             alt="問題 {{ question.number }}"
+             loading="lazy">
+    </div>
+
+    <!-- 選択肢（常に4択固定：イ・ロ・ハ・ニ） -->
+    {% set labels = ["イ", "ロ", "ハ", "ニ"] %}
+    <div class="choices" id="choices">
+        {% for label in labels %}
+        <button class="choice-btn {% if existing and existing.selected == loop.index0 %}selected{% endif %}"
+                data-index="{{ loop.index0 }}"
+                onclick="selectAndSubmit({{ loop.index0 }})">
+            {{ label }}
+        </button>
+        {% endfor %}
+    </div>
+
+    <!-- ナビゲーション -->
+    <div class="quiz-nav">
+        {% if q_index > 0 %}
+        <a href="{{ url_for('quiz', session_id=session.id, q=q_index - 1) }}" class="btn">前の問題</a>
+        {% else %}
+        <span></span>
+        {% endif %}
+
+        {% if q_index < q_total - 1 %}
+        <a href="{{ url_for('quiz', session_id=session.id, q=q_index + 1) }}" class="btn">次の問題</a>
+        {% else %}
+        <a href="{{ url_for('result', session_id=session.id) }}" class="btn btn-finish">採点する</a>
+        {% endif %}
+    </div>
+
+    <!-- 問題番号一覧 -->
+    <div class="question-nav">
+        {% for qid in q_ids %}
+        <a href="{{ url_for('quiz', session_id=session.id, q=loop.index0) }}"
+           class="q-num {% if loop.index0 == q_index %}current{% endif %} {% if qid in answered_map %}answered{% endif %}">
+            {{ loop.index }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const SESSION_ID = {{ session.id }};
+    const QUESTION_ID = {{ question.id }};
+    const Q_INDEX = {{ q_index }};
+    const NEXT_URL = {% if q_index < q_total - 1 %}"{{ url_for('quiz', session_id=session.id, q=q_index + 1) }}"{% else %}null{% endif %};
+    let selectedIndex = {{ existing.selected if existing and existing.selected is not none else 'null' }};
+</script>
+<script src="{{ url_for('static', filename='quiz.js') }}"></script>
+{% if question.is_haisen %}
+<script src="{{ url_for('static', filename='diagram.js') }}"></script>
+{% endif %}
+{% endblock %}
