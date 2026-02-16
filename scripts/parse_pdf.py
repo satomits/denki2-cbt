@@ -133,13 +133,16 @@ def extract_questions(pdf_path: str, year: str, half: str) -> list[dict]:
                 if UNIT_FALSE_POSITIVE.match(q_text):
                     continue
 
+                # 第二種電気工事士: 問31以降が配線図セクション
+                section = "配線図" if q_num >= 31 else "一般問題"
+
                 questions[q_num] = {
                     "id": q_num,
                     "year": year,
                     "half": half,
                     "number": q_num,
                     "page": page_num,
-                    "section": current_section,
+                    "section": section,
                     "question": q_text,
                     "choices": [],
                     "answer": None,
@@ -308,7 +311,7 @@ def main():
                     "half": half,
                     "number": q_num,
                     "page": page,
-                    "section": "配線図" if q_num > 30 else "一般問題",
+                    "section": "配線図" if q_num >= 31 else "一般問題",
                     "question": f"（問{q_num}: テキスト抽出不可 - 画像を参照）",
                     "choices": [],
                     "answer": answers[q_num],
