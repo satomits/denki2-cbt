@@ -1,3 +1,51 @@
+// --- 後で見直すフラグ ---
+function getFlagKey() {
+    return `flags_${SESSION_ID}`;
+}
+
+function getFlags() {
+    try {
+        return JSON.parse(localStorage.getItem(getFlagKey()) || '[]');
+    } catch { return []; }
+}
+
+function saveFlags(flags) {
+    localStorage.setItem(getFlagKey(), JSON.stringify(flags));
+}
+
+function toggleFlag() {
+    let flags = getFlags();
+    const idx = flags.indexOf(Q_INDEX);
+    if (idx >= 0) {
+        flags.splice(idx, 1);
+    } else {
+        flags.push(Q_INDEX);
+    }
+    saveFlags(flags);
+    updateFlagUI();
+}
+
+function updateFlagUI() {
+    const flags = getFlags();
+    const isFlagged = flags.includes(Q_INDEX);
+
+    // ボタン表示更新
+    const btn = document.getElementById('flag-btn');
+    if (btn) {
+        btn.classList.toggle('flagged', isFlagged);
+        btn.textContent = isFlagged ? '見直し解除' : '後で見直す';
+    }
+
+    // 問題番号ナビのフラグ表示
+    document.querySelectorAll('.q-num[data-qindex]').forEach(el => {
+        const qi = parseInt(el.dataset.qindex);
+        el.classList.toggle('flagged', flags.includes(qi));
+    });
+}
+
+document.addEventListener('DOMContentLoaded', updateFlagUI);
+
+// --- 回答処理 ---
 async function selectAndSubmit(index) {
     selectedIndex = index;
 

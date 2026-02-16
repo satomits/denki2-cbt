@@ -11,6 +11,7 @@
         <nav>
             <a href="{{ url_for('index') }}">ホーム</a>
             <a href="{{ url_for('review') }}">間違い復習</a>
+            <button id="invert-toggle" class="btn-invert" onclick="toggleInvert()">反転</button>
         </nav>
         <h1>第二種電気工事士 CBT練習</h1>
     </header>
@@ -18,5 +19,20 @@
         {% block content %}{% endblock %}
     </main>
     {% block scripts %}{% endblock %}
+    <script>
+    function toggleInvert() {
+        document.documentElement.classList.toggle('inverted');
+        const on = document.documentElement.classList.contains('inverted');
+        localStorage.setItem('inverted', on ? '1' : '0');
+        document.getElementById('invert-toggle').textContent = on ? '通常' : '反転';
+    }
+    // 起動時に復元
+    (function() {
+        if (localStorage.getItem('inverted') === '1') {
+            document.documentElement.classList.add('inverted');
+            document.getElementById('invert-toggle').textContent = '通常';
+        }
+    })();
+    </script>
 </body>
 </html>

@@ -25,7 +25,9 @@
 
     <div id="haisen-notes" class="haisen-notes" style="display:none;">
         <img src="{{ url_for('static', filename=question.haisen_notes_path) }}"
-             alt="配線図 注意事項">
+             alt="配線図 注意事項"
+             onclick="openGenericZoom(this.src, '注意事項')"
+             style="cursor:zoom-in;">
     </div>
 
     <!-- 配線図モーダル -->
@@ -49,11 +51,31 @@
     </div>
     {% endif %}
 
-    <!-- 問題画像（クロップ済み） -->
-    <div class="question-image">
+    <!-- 問題画像（クロップ済み） — クリックで拡大 -->
+    <div class="question-image" onclick="openImageZoom()">
         <img src="{{ url_for('static', filename=question.image_path) }}"
              alt="問題 {{ question.number }}"
              loading="lazy">
+    </div>
+
+    <!-- 問題画像ズームモーダル -->
+    <div id="image-zoom-modal" class="diagram-modal" style="display:none;">
+        <div class="diagram-modal-header">
+            <span>問{{ question.number }}（スクロール: 拡大縮小 / ドラッグ: 移動）</span>
+            <button class="btn-close" onclick="closeImageZoom()">&times;</button>
+        </div>
+        <div class="diagram-viewport" id="image-zoom-viewport">
+            <img id="image-zoom-img"
+                 src="{{ url_for('static', filename=question.image_path) }}"
+                 alt="問題 {{ question.number }}"
+                 draggable="false">
+        </div>
+        <div class="diagram-controls">
+            <button class="btn" onclick="zoomImage(-0.2)">−</button>
+            <span id="image-zoom-level">100%</span>
+            <button class="btn" onclick="zoomImage(0.2)">＋</button>
+            <button class="btn" onclick="resetImageZoom()">リセット</button>
+        </div>
     </div>
 
     <!-- 選択肢（常に4択固定：イ・ロ・ハ・ニ） -->
@@ -76,6 +98,8 @@
         <span></span>
         {% endif %}
 
+        <button id="flag-btn" class="btn btn-flag" onclick="toggleFlag()">後で見直す</button>
+
         {% if q_index < q_total - 1 %}
         <a href="{{ url_for('quiz', session_id=session.id, q=q_index + 1) }}" class="btn">次の問題</a>
         {% else %}
@@ -87,6 +111,7 @@
     <div class="question-nav">
         {% for qid in q_ids %}
         <a href="{{ url_for('quiz', session_id=session.id, q=loop.index0) }}"
+           data-qindex="{{ loop.index0 }}"
            class="q-num {% if loop.index0 == q_index %}current{% endif %} {% if qid in answered_map %}answered{% endif %}">
             {{ loop.index }}
         </a>
@@ -104,6 +129,7 @@
     let selectedIndex = {{ existing.selected if existing and existing.selected is not none else 'null' }};
 </script>
 <script src="{{ url_for('static', filename='quiz.js') }}"></script>
+<script src="{{ url_for('static', filename='image_zoom.js') }}"></script>
 {% if question.is_haisen %}
 <script src="{{ url_for('static', filename='diagram.js') }}"></script>
 {% endif %}
