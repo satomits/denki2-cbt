@@ -207,6 +207,8 @@ def register_routes(app: Flask):
         return render_template("review.html", wrong_attempts=unique_wrong)
 
 
+# Gunicorn 用エントリポイント: gunicorn app:app
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True, port=5555)

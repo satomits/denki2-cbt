@@ -5,6 +5,5 @@ results/attempts.sqlite
 
 # generated / large assets
 data/pdfs/
-static/pages/
 data/questions.jsonl
 results/attempts.sqlite
