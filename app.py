@@ -3,12 +3,12 @@
 import functools
 import json
 import random
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
-from models import Attempt, Question, QuizSession, User, db
+from models import JST, Attempt, Question, QuizSession, User, db
 
 
 def create_app(test_config=None):
@@ -218,7 +218,7 @@ def register_routes(app: Flask):
                 else:
                     a.is_correct = False
             quiz_session.correct_count = sum(1 for a in attempts if a.is_correct)
-            quiz_session.finished_at = datetime.now(timezone.utc)
+            quiz_session.finished_at = datetime.now(JST)
             db.session.commit()
 
         # タグ別成績

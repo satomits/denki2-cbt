@@ -1,7 +1,9 @@
 """SQLAlchemy モデル定義。"""
 
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+JST = timezone(timedelta(hours=9))
 
 from flask_sqlalchemy import SQLAlchemy
 
@@ -13,7 +15,7 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(JST))
 
     sessions = db.relationship("QuizSession", backref="user", lazy=True)
 
@@ -75,7 +77,7 @@ class QuizSession(db.Model):
     category = db.Column(db.String(100), default="")
     total_count = db.Column(db.Integer, default=0)
     correct_count = db.Column(db.Integer, default=0)
-    started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    started_at = db.Column(db.DateTime, default=lambda: datetime.now(JST))
     finished_at = db.Column(db.DateTime, nullable=True)
 
     attempts = db.relationship("Attempt", backref="session", lazy=True)
@@ -96,6 +98,6 @@ class Attempt(db.Model):
     question_id = db.Column(db.Integer, db.ForeignKey("questions.id"), nullable=False)
     selected = db.Column(db.Integer, nullable=True)  # ユーザーの選択 (0-3), null=未回答
     is_correct = db.Column(db.Boolean, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(JST))
 
     question = db.relationship("Question", lazy=True)
