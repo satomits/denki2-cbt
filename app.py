@@ -109,14 +109,8 @@ def register_routes(app: Flask):
             query = query.filter(Question.tags_json.contains(tag))
 
         if mode == "review":
-            # 間違えた問題のIDを取得（自分の回答のみ）
-            wrong_ids = [
-                a.question_id
-                for a in Attempt.query.join(QuizSession).filter(
-                    QuizSession.user_id == session["user_id"],
-                    Attempt.is_correct == False,  # noqa: E712
-                ).all()
-            ]
+            # 最新の回答が不正解の問題のみ取得（自分の回答のみ）
+            wrong_ids = _get_wrong_question_ids(session["user_id"])
             if wrong_ids:
                 query = query.filter(Question.id.in_(set(wrong_ids)))
 
@@ -239,27 +233,40 @@ def register_routes(app: Flask):
             tag_stats=tag_stats,
         )
 
+    def _get_wrong_question_ids(user_id: int) -> list[int]:
+        """最新の回答が不正解の問題IDを返す。"""
+        all_attempts = (
+            db.session.query(Attempt)
+            .join(QuizSession)
+            .filter(QuizSession.user_id == user_id)
+            .order_by(Attempt.created_at.desc())
+            .all()
+        )
+        latest: dict[int, Attempt] = {}
+        for a in all_attempts:
+            if a.question_id not in latest:
+                latest[a.question_id] = a
+        return [qid for qid, a in latest.items() if not a.is_correct]
+
     @app.route("/review")
     @login_required
     def review():
-        # 間違えた問題一覧（重複排除、最新の回答を優先、自分の回答のみ）
-        wrong_attempts = (
+        # 最新の回答が不正解の問題一覧（自分の回答のみ）
+        all_attempts = (
             db.session.query(Attempt)
             .join(QuizSession)
-            .filter(
-                QuizSession.user_id == session["user_id"],
-                Attempt.is_correct == False,  # noqa: E712
-            )
+            .filter(QuizSession.user_id == session["user_id"])
             .order_by(Attempt.created_at.desc())
             .all()
         )
 
         seen = set()
         unique_wrong = []
-        for a in wrong_attempts:
+        for a in all_attempts:
             if a.question_id not in seen:
                 seen.add(a.question_id)
-                unique_wrong.append(a)
+                if not a.is_correct:
+                    unique_wrong.append(a)
 
         return render_template("review.html", wrong_attempts=unique_wrong)
 
