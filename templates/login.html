@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}ログイン - 第二種電気工事士 CBT練習{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <h2>ログイン</h2>
+    <p>ユーザー名を入力してください。初めての場合は自動的にアカウントが作成されます。</p>
+    {% if error %}
+    <p class="login-error">{{ error }}</p>
+    {% endif %}
+    <form method="POST" action="{{ url_for('login') }}">
+        <input type="text" name="username" placeholder="ユーザー名" maxlength="80" required autofocus>
+        <button type="submit">ログイン</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,13 +1,14 @@
 """第二種電気工事士 CBT 練習アプリ。"""
 
+import functools
 import json
 import random
 from datetime import datetime, timezone
 from pathlib import Path
 
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
-from models import Attempt, Question, QuizSession, db
+from models import Attempt, Question, QuizSession, User, db
 
 
 def create_app(test_config=None):
@@ -23,14 +24,51 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()
+        # 既存DBにuser_idカラムがない場合に追加
+        with db.engine.connect() as conn:
+            columns = [row[1] for row in conn.execute(db.text("PRAGMA table_info(quiz_sessions)"))]
+            if "user_id" not in columns:
+                conn.execute(db.text("ALTER TABLE quiz_sessions ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+                conn.commit()
 
     register_routes(app)
     return app
 
 
+def login_required(f):
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
 def register_routes(app: Flask):
 
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            if not username:
+                return render_template("login.html", error="ユーザー名を入力してください。")
+            user = User.query.filter_by(username=username).first()
+            if not user:
+                user = User(username=username)
+                db.session.add(user)
+                db.session.commit()
+            session["user_id"] = user.id
+            session["username"] = user.username
+            return redirect(url_for("index"))
+        return render_template("login.html")
+
+    @app.route("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for("login"))
+
     @app.route("/")
+    @login_required
     def index():
         # 年度・半期一覧
         years = db.session.query(
@@ -44,7 +82,9 @@ def register_routes(app: Flask):
         tags = sorted(all_tags)
 
         # 直近の成績
-        recent_sessions = QuizSession.query.order_by(
+        recent_sessions = QuizSession.query.filter_by(
+            user_id=session["user_id"]
+        ).order_by(
             QuizSession.started_at.desc()
         ).limit(10).all()
 
@@ -53,6 +93,7 @@ def register_routes(app: Flask):
         )
 
     @app.route("/quiz/start", methods=["POST"])
+    @login_required
     def quiz_start():
         year = request.form.get("year", "")
         half = request.form.get("half", "")
@@ -68,10 +109,13 @@ def register_routes(app: Flask):
             query = query.filter(Question.tags_json.contains(tag))
 
         if mode == "review":
-            # 間違えた問題のIDを取得
+            # 間違えた問題のIDを取得（自分の回答のみ）
             wrong_ids = [
                 a.question_id
-                for a in Attempt.query.filter_by(is_correct=False).all()
+                for a in Attempt.query.join(QuizSession).filter(
+                    QuizSession.user_id == session["user_id"],
+                    Attempt.is_correct == False,  # noqa: E712
+                ).all()
             ]
             if wrong_ids:
                 query = query.filter(Question.id.in_(set(wrong_ids)))
@@ -84,20 +128,24 @@ def register_routes(app: Flask):
             questions = random.sample(questions, count)
 
         q_ids = [q.id for q in questions]
-        session = QuizSession(
+        quiz_session = QuizSession(
+            user_id=session["user_id"],
             category=f"{year}_{half}" if year else tag or "all",
             total_count=len(q_ids),
             question_ids_json=json.dumps(q_ids),
         )
-        db.session.add(session)
+        db.session.add(quiz_session)
         db.session.commit()
 
-        return redirect(url_for("quiz", session_id=session.id, q=0))
+        return redirect(url_for("quiz", session_id=quiz_session.id, q=0))
 
     @app.route("/quiz/<int:session_id>")
+    @login_required
     def quiz(session_id: int):
-        session = QuizSession.query.get_or_404(session_id)
-        q_ids = session.question_ids
+        quiz_session = QuizSession.query.get_or_404(session_id)
+        if quiz_session.user_id and quiz_session.user_id != session["user_id"]:
+            return redirect(url_for("index"))
+        q_ids = quiz_session.question_ids
         q_index = int(request.args.get("q", 0))
 
         if q_index >= len(q_ids):
@@ -117,7 +165,7 @@ def register_routes(app: Flask):
 
         return render_template(
             "quiz.html",
-            session=session,
+            quiz_session=quiz_session,
             question=question,
             q_index=q_index,
             q_total=len(q_ids),
@@ -127,6 +175,7 @@ def register_routes(app: Flask):
         )
 
     @app.route("/api/submit", methods=["POST"])
+    @login_required
     def submit_answer():
         """回答を保存する（採点は結果表示時に一括で行う）。"""
         data = request.get_json()
@@ -153,20 +202,23 @@ def register_routes(app: Flask):
         return jsonify({"ok": True})
 
     @app.route("/result/<int:session_id>")
+    @login_required
     def result(session_id: int):
-        session = QuizSession.query.get_or_404(session_id)
+        quiz_session = QuizSession.query.get_or_404(session_id)
+        if quiz_session.user_id and quiz_session.user_id != session["user_id"]:
+            return redirect(url_for("index"))
         attempts = Attempt.query.filter_by(session_id=session_id).all()
 
         # 一括採点（まだ採点されていない場合）
-        if not session.finished_at:
+        if not quiz_session.finished_at:
             for a in attempts:
                 q = a.question
                 if q.answer is not None and a.selected is not None:
                     a.is_correct = (a.selected == q.answer)
                 else:
                     a.is_correct = False
-            session.correct_count = sum(1 for a in attempts if a.is_correct)
-            session.finished_at = datetime.now(timezone.utc)
+            quiz_session.correct_count = sum(1 for a in attempts if a.is_correct)
+            quiz_session.finished_at = datetime.now(timezone.utc)
             db.session.commit()
 
         # タグ別成績
@@ -182,17 +234,22 @@ def register_routes(app: Flask):
 
         return render_template(
             "result.html",
-            session=session,
+            quiz_session=quiz_session,
             attempts=attempts,
             tag_stats=tag_stats,
         )
 
     @app.route("/review")
+    @login_required
     def review():
-        # 間違えた問題一覧（重複排除、最新の回答を優先）
+        # 間違えた問題一覧（重複排除、最新の回答を優先、自分の回答のみ）
         wrong_attempts = (
             db.session.query(Attempt)
-            .filter_by(is_correct=False)
+            .join(QuizSession)
+            .filter(
+                QuizSession.user_id == session["user_id"],
+                Attempt.is_correct == False,  # noqa: E712
+            )
             .order_by(Attempt.created_at.desc())
             .all()
         )

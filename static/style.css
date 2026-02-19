@@ -173,6 +173,29 @@ tr.wrong td:last-child { color: #e74c3c; font-weight: bold; }
 .diagram-controls .btn { padding: 0.4rem 1rem; font-size: 1.1rem; }
 .diagram-controls span { color: #eee; font-size: 0.95rem; min-width: 3.5rem; text-align: center; }
 
+/* Login */
+.login-container {
+    background: white; border-radius: 8px; padding: 2rem; max-width: 400px;
+    margin: 3rem auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;
+}
+.login-container h2 { margin-bottom: 0.5rem; }
+.login-container p { color: #666; margin-bottom: 1.5rem; font-size: 0.9rem; }
+.login-container input {
+    width: 100%; padding: 0.7rem; border: 1px solid #ccc; border-radius: 4px;
+    font-size: 1rem; margin-bottom: 1rem;
+}
+.login-container button {
+    width: 100%; padding: 0.7rem; background: #2980b9; color: white; border: none;
+    border-radius: 4px; font-size: 1rem; cursor: pointer;
+}
+.login-container button:hover { background: #2471a3; }
+.login-error { color: #e74c3c; margin-bottom: 1rem; }
+
+/* Nav user */
+.nav-user { color: #aed6f1; margin-left: 1rem; font-size: 0.9rem; }
+.nav-logout { color: #aed6f1; text-decoration: none; margin-left: 0.5rem; font-size: 0.85rem; }
+.nav-logout:hover { color: white; }
+
 /* Result */
 .result-summary { text-align: center; margin: 2rem 0; }
 .score { font-size: 2.5rem; font-weight: bold; }

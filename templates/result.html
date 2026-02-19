@@ -8,15 +8,15 @@
 
     <div class="result-summary">
         <div class="score">
-            <span class="score-num">{{ session.correct_count }}</span>
+            <span class="score-num">{{ quiz_session.correct_count }}</span>
             <span class="score-sep">/</span>
-            <span class="score-den">{{ session.total_count }}</span>
+            <span class="score-den">{{ quiz_session.total_count }}</span>
         </div>
         <div class="score-percent">
-            {{ (session.correct_count / session.total_count * 100)|round|int if session.total_count else 0 }}%
+            {{ (quiz_session.correct_count / quiz_session.total_count * 100)|round|int if quiz_session.total_count else 0 }}%
         </div>
         <p class="pass-line">
-            {% if session.total_count and (session.correct_count / session.total_count) >= 0.6 %}
+            {% if quiz_session.total_count and (quiz_session.correct_count / quiz_session.total_count) >= 0.6 %}
                 合格ライン（60%）クリア
             {% else %}
                 合格ライン（60%）未達

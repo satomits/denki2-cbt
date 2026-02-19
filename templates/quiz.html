@@ -93,7 +93,7 @@
     <!-- ナビゲーション -->
     <div class="quiz-nav">
         {% if q_index > 0 %}
-        <a href="{{ url_for('quiz', session_id=session.id, q=q_index - 1) }}" class="btn">前の問題</a>
+        <a href="{{ url_for('quiz', session_id=quiz_session.id, q=q_index - 1) }}" class="btn">前の問題</a>
         {% else %}
         <span></span>
         {% endif %}
@@ -101,16 +101,16 @@
         <button id="flag-btn" class="btn btn-flag" onclick="toggleFlag()">後で見直す</button>
 
         {% if q_index < q_total - 1 %}
-        <a href="{{ url_for('quiz', session_id=session.id, q=q_index + 1) }}" class="btn">次の問題</a>
+        <a href="{{ url_for('quiz', session_id=quiz_session.id, q=q_index + 1) }}" class="btn">次の問題</a>
         {% else %}
-        <a href="{{ url_for('result', session_id=session.id) }}" class="btn btn-finish">採点する</a>
+        <a href="{{ url_for('result', session_id=quiz_session.id) }}" class="btn btn-finish">採点する</a>
         {% endif %}
     </div>
 
     <!-- 問題番号一覧 -->
     <div class="question-nav">
         {% for qid in q_ids %}
-        <a href="{{ url_for('quiz', session_id=session.id, q=loop.index0) }}"
+        <a href="{{ url_for('quiz', session_id=quiz_session.id, q=loop.index0) }}"
            data-qindex="{{ loop.index0 }}"
            class="q-num {% if loop.index0 == q_index %}current{% endif %} {% if qid in answered_map %}answered{% endif %}">
             {{ loop.index }}
@@ -122,10 +122,10 @@
 
 {% block scripts %}
 <script>
-    const SESSION_ID = {{ session.id }};
+    const SESSION_ID = {{ quiz_session.id }};
     const QUESTION_ID = {{ question.id }};
     const Q_INDEX = {{ q_index }};
-    const NEXT_URL = {% if q_index < q_total - 1 %}"{{ url_for('quiz', session_id=session.id, q=q_index + 1) }}"{% else %}null{% endif %};
+    const NEXT_URL = {% if q_index < q_total - 1 %}"{{ url_for('quiz', session_id=quiz_session.id, q=q_index + 1) }}"{% else %}null{% endif %};
     let selectedIndex = {{ existing.selected if existing and existing.selected is not none else 'null' }};
 </script>
 <script src="{{ url_for('static', filename='quiz.js') }}"></script>
