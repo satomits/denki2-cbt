@@ -8,7 +8,10 @@
 </head>
 <body>
   <header>
-    <h1>第二種電気工事士 CBT 練習</h1>
+    <div class="header-inner">
+      <h1>第二種電気工事士 CBT 練習</h1>
+      <button class="btn-invert" id="btn-invert" onclick="toggleInvert()">反転</button>
+    </div>
   </header>
 
   <main>
@@ -49,16 +52,31 @@
         <span id="quiz-progress" class="quiz-progress"></span>
         <button class="btn btn-finish" onclick="finishQuiz()">採点する</button>
       </div>
+      <div id="quiz-tags" class="quiz-tags"></div>
 
       <div class="card quiz-container">
-        <div class="question-image" id="question-image-wrap">
-          <img id="question-image" src="" alt="">
+        <!-- 配線図ツール（配線図問題のみ表示） -->
+        <div class="haisen-tools" id="haisen-tools" style="display:none">
+          <button class="btn btn-notes" onclick="toggleNotes()">注意事項</button>
+          <button class="btn btn-diagram" onclick="openDiagram()">配線図を開く</button>
         </div>
+        <div id="haisen-notes" class="haisen-notes" style="display:none">
+          <img id="haisen-notes-img" src="" alt="配線図 注意事項"
+               onclick="openGenericZoom(this.src, '注意事項')" style="cursor:zoom-in;">
+        </div>
+
+        <!-- 問題画像（クリックで拡大） -->
+        <div class="question-image" id="question-image-wrap" onclick="openImageZoom()" style="cursor:zoom-in;">
+          <img id="question-image" src="" alt="" loading="lazy">
+        </div>
+
         <div id="question-text" class="question-text"></div>
         <div class="choices" id="choices"></div>
         <div id="feedback" class="feedback" style="display:none"></div>
+
         <div class="quiz-nav">
           <button class="btn" id="btn-prev" onclick="navigate(-1)">&#8592; 前へ</button>
+          <button class="btn btn-flag" id="btn-flag" onclick="toggleFlag()">後で見直す</button>
           <button class="btn btn-primary" id="btn-next" onclick="navigate(1)">次へ &#8594;</button>
         </div>
       </div>
@@ -92,6 +110,40 @@
     </div>
 
   </main>
+
+  <!-- 配線図モーダル -->
+  <div id="diagram-modal" class="diagram-modal" style="display:none">
+    <div class="diagram-modal-header">
+      <span>配線図（スクロール: 拡大縮小 / ドラッグ: 移動）</span>
+      <button class="btn-close" onclick="closeDiagram()">&times;</button>
+    </div>
+    <div class="diagram-viewport" id="diagram-viewport">
+      <img id="diagram-img" src="" alt="配線図" draggable="false">
+    </div>
+    <div class="diagram-controls">
+      <button class="btn" onclick="zoomDiagram(-0.2)">&#8722;</button>
+      <span id="zoom-level">100%</span>
+      <button class="btn" onclick="zoomDiagram(0.2)">＋</button>
+      <button class="btn" onclick="resetDiagram()">リセット</button>
+    </div>
+  </div>
+
+  <!-- 問題画像ズームモーダル -->
+  <div id="image-zoom-modal" class="diagram-modal" style="display:none">
+    <div class="diagram-modal-header">
+      <span id="image-zoom-title">問題画像（スクロール: 拡大縮小 / ドラッグ: 移動）</span>
+      <button class="btn-close" onclick="closeImageZoom()">&times;</button>
+    </div>
+    <div class="diagram-viewport" id="image-zoom-viewport">
+      <img id="image-zoom-img" src="" alt="" draggable="false">
+    </div>
+    <div class="diagram-controls">
+      <button class="btn" onclick="zoomImage(-0.2)">&#8722;</button>
+      <span id="image-zoom-level">100%</span>
+      <button class="btn" onclick="zoomImage(0.2)">＋</button>
+      <button class="btn" onclick="resetImageZoom()">リセット</button>
+    </div>
+  </div>
 
   <script src="questions.js"></script>
   <script src="app.js"></script>
