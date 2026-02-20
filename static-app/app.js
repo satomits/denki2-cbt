@@ -166,6 +166,7 @@ function startQuiz() {
   currentQuestions = pool.slice(0, count);
   currentIndex = 0;
   answers = {};
+  wrongQuestionsForRetry = [];
 
   showScreen('quiz');
   renderQuestion();
@@ -180,6 +181,7 @@ function restartQuiz() {
 }
 
 function retryWrongOnly() {
+  console.log('[retryWrongOnly] wrongQuestionsForRetry:', wrongQuestionsForRetry.map(q => `${q.year}${q.half}問${q.number}`));
   if (wrongQuestionsForRetry.length === 0) return;
   currentQuestions = wrongQuestionsForRetry;
   wrongQuestionsForRetry = [];
@@ -357,6 +359,8 @@ function finishQuiz() {
   // 間違い問題リストを確定（ボタン表示と完全に同じ基準）
   wrongQuestionsForRetry = currentQuestions.filter((q, i) => answers[i] !== q.answer);
   const correct = total - wrongQuestionsForRetry.length;
+  console.log('[finishQuiz] total:', total, 'correct:', correct,
+    'wrong:', wrongQuestionsForRetry.map(q => `${q.year}${q.half}問${q.number}(ans=${q.answer},選択=${answers[currentQuestions.indexOf(q)]})`));
   const percent = total > 0 ? Math.round(correct / total * 100) : 0;
 
   document.getElementById('result-score').textContent = `${correct} / ${total}`;
