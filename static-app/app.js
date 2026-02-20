@@ -2,8 +2,9 @@
 // 画像は ../server/static/pages/ を参照（リポジトリを clone してから開くこと）
 
 const STATIC_BASE = '../server/static/';
-const STORAGE_KEY = 'denki2-history';
-const FLAG_KEY    = 'denki2-flags';
+const STORAGE_KEY    = 'denki2-history';
+const FLAG_KEY       = 'denki2-flags';
+const LAST_WRONG_KEY = 'denki2-last-wrong';
 
 // ---- クイズ状態 ----
 let currentQuestions = [];
@@ -110,6 +111,7 @@ function clearHistory() {
   if (confirm('学習履歴をすべてクリアしますか？')) {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(FLAG_KEY);
+    localStorage.removeItem(LAST_WRONG_KEY);
     showHistory();
   }
 }
@@ -161,12 +163,12 @@ function startQuiz() {
     pool = pool.filter(q => q.year === year && q.half === half);
   }
   if (mode === 'review') {
-    const wrongIds = getWrongIds();
-    if (wrongIds.size === 0) {
-      alert('復習すべき間違いがありません。通常モードで挑戦してください。');
+    const lastWrong = new Set(JSON.parse(localStorage.getItem(LAST_WRONG_KEY) || '[]'));
+    if (lastWrong.size === 0) {
+      alert('直前のセッションで間違えた問題がありません。通常モードで挑戦してください。');
       return;
     }
-    pool = pool.filter(q => wrongIds.has(q.id));
+    pool = pool.filter(q => lastWrong.has(q.id));
   }
   if (pool.length === 0) { alert('該当する問題がありません。'); return; }
 
@@ -352,6 +354,12 @@ function renderNavDots() {
 // =============================================================
 
 function finishQuiz() {
+  // 直前セッションの間違いIDを保存（復習モードで参照）
+  const lastWrongIds = currentQuestions
+    .filter((q, i) => answers[i] !== q.answer)
+    .map(q => q.id);
+  localStorage.setItem(LAST_WRONG_KEY, JSON.stringify(lastWrongIds));
+
   const total = currentQuestions.length;
   const correct = currentQuestions.filter((q, i) => answers[i] === q.answer).length;
   const percent = total > 0 ? Math.round(correct / total * 100) : 0;
