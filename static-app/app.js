@@ -2,9 +2,8 @@
 // 画像は ../server/static/pages/ を参照（リポジトリを clone してから開くこと）
 
 const STATIC_BASE = '../server/static/';
-const STORAGE_KEY    = 'denki2-history';
-const FLAG_KEY       = 'denki2-flags';
-const LAST_WRONG_KEY = 'denki2-last-wrong';
+const STORAGE_KEY = 'denki2-history';
+const FLAG_KEY    = 'denki2-flags';
 
 // ---- クイズ状態 ----
 let currentQuestions = [];
@@ -111,7 +110,6 @@ function clearHistory() {
   if (confirm('学習履歴をすべてクリアしますか？')) {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(FLAG_KEY);
-    localStorage.removeItem(LAST_WRONG_KEY);
     showHistory();
   }
 }
@@ -154,21 +152,12 @@ function updateFlagButton() {
 function startQuiz() {
   const yearHalf = document.getElementById('sel-year-half').value;
   const count = Math.max(1, parseInt(document.getElementById('inp-count').value, 10) || 30);
-  const mode = document.getElementById('sel-mode').value;
-  lastSettings = { yearHalf, count, mode };
+  lastSettings = { yearHalf, count };
 
   let pool = QUESTIONS.slice();
   if (yearHalf) {
     const [year, half] = yearHalf.split('_');
     pool = pool.filter(q => q.year === year && q.half === half);
-  }
-  if (mode === 'review') {
-    const lastWrong = new Set(JSON.parse(localStorage.getItem(LAST_WRONG_KEY) || '[]'));
-    if (lastWrong.size === 0) {
-      alert('直前のセッションで間違えた問題がありません。通常モードで挑戦してください。');
-      return;
-    }
-    pool = pool.filter(q => lastWrong.has(q.id));
   }
   if (pool.length === 0) { alert('該当する問題がありません。'); return; }
 
@@ -185,9 +174,18 @@ function restartQuiz() {
   if (lastSettings.yearHalf !== undefined) {
     document.getElementById('sel-year-half').value = lastSettings.yearHalf;
     document.getElementById('inp-count').value = lastSettings.count;
-    document.getElementById('sel-mode').value = lastSettings.mode;
   }
   startQuiz();
+}
+
+function retryWrongOnly() {
+  const wrongQuestions = currentQuestions.filter((q, i) => answers[i] !== q.answer);
+  if (wrongQuestions.length === 0) return;
+  currentQuestions = wrongQuestions;
+  currentIndex = 0;
+  answers = {};
+  showScreen('quiz');
+  renderQuestion();
 }
 
 function shuffleArray(arr) {
@@ -354,12 +352,6 @@ function renderNavDots() {
 // =============================================================
 
 function finishQuiz() {
-  // 直前セッションの間違いIDを保存（復習モードで参照）
-  const lastWrongIds = currentQuestions
-    .filter((q, i) => answers[i] !== q.answer)
-    .map(q => q.id);
-  localStorage.setItem(LAST_WRONG_KEY, JSON.stringify(lastWrongIds));
-
   const total = currentQuestions.length;
   const correct = currentQuestions.filter((q, i) => answers[i] === q.answer).length;
   const percent = total > 0 ? Math.round(correct / total * 100) : 0;
@@ -386,6 +378,16 @@ function finishQuiz() {
     else if (stat.correct === 0) tr.className = 'wrong';
     tr.innerHTML = `<td>${tag}</td><td>${stat.correct}/${stat.total}</td><td>${pct}%</td>`;
     tbody.appendChild(tr);
+  }
+
+  // 間違えた問題があればやり直しボタンを表示
+  const wrongCount = total - correct;
+  const btnRetry = document.getElementById('btn-retry-wrong');
+  if (wrongCount > 0) {
+    btnRetry.textContent = `間違えた ${wrongCount} 問をやり直す`;
+    btnRetry.style.display = '';
+  } else {
+    btnRetry.style.display = 'none';
   }
 
   showScreen('result');
