@@ -2,8 +2,8 @@ services:
   - type: web
     name: denki2-cbt
     runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    buildCommand: pip install -r server/requirements.txt
+    startCommand: gunicorn --chdir server --config server/gunicorn.conf.py app:app
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.11"
