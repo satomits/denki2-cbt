@@ -10,6 +10,8 @@ import json
 import sys
 from pathlib import Path
 
+_DEFAULT_TAGS = str(Path(__file__).resolve().parent.parent.parent / "shared" / "tags.json")
+
 
 def load_tag_dict(tags_file: str) -> dict[str, list[str]]:
     with open(tags_file, encoding="utf-8") as f:
@@ -33,18 +35,13 @@ def tag_question(q: dict, tag_dict: dict[str, list[str]]) -> list[str]:
 def main():
     parser = argparse.ArgumentParser(description="JSONL にタグを付与")
     parser.add_argument("jsonl", help="入力 JSONL ファイル")
-    parser.add_argument("--tags-file", default="data/tags.json", help="タグ辞書 JSON")
+    parser.add_argument("--tags-file", default=_DEFAULT_TAGS, help="タグ辞書 JSON")
     args = parser.parse_args()
 
     tags_file = Path(args.tags_file)
     if not tags_file.exists():
-        # スクリプトからの相対パスも試す
-        alt = Path(__file__).resolve().parent.parent / args.tags_file
-        if alt.exists():
-            tags_file = alt
-        else:
-            print(f"Error: {args.tags_file} が見つかりません", file=sys.stderr)
-            sys.exit(1)
+        print(f"Error: {args.tags_file} が見つかりません", file=sys.stderr)
+        sys.exit(1)
 
     tag_dict = load_tag_dict(str(tags_file))
 
