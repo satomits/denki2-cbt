@@ -1,5 +1,11 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* 白黒反転モード */
+html.inverted {
+  filter: invert(1) hue-rotate(180deg);
+  background: #000;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Segoe UI", sans-serif;
   background: #f5f5f5;
@@ -7,12 +13,28 @@ body {
   line-height: 1.6;
 }
 
+/* Header */
 header {
   background: #1a5276;
   color: white;
-  padding: 1rem 2rem;
+  padding: 0.7rem 2rem;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 header h1 { font-size: 1.3rem; }
+.btn-invert {
+  background: none;
+  border: 1px solid #aed6f1;
+  color: #aed6f1;
+  padding: 0.2rem 0.7rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.btn-invert:hover { background: rgba(255,255,255,0.15); color: white; }
 
 main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
 
@@ -42,8 +64,16 @@ main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-primary { background: #2980b9; color: white; border-color: #2980b9; }
 .btn-primary:hover { background: #2471a3; }
-.btn-finish { background: #27ae60; color: white; border-color: #27ae60; }
-.btn-finish:hover { background: #229954; }
+.btn-finish  { background: #27ae60; color: white; border-color: #27ae60; }
+.btn-finish:hover  { background: #229954; }
+.btn-flag    { background: white; color: #e74c3c; border-color: #e74c3c; }
+.btn-flag:hover    { background: #fdf2f2; }
+.btn-flag.flagged  { background: #e74c3c; color: white; }
+.btn-flag.flagged:hover { background: #c0392b; }
+.btn-notes   { background: #f39c12; color: white; border-color: #f39c12; }
+.btn-notes:hover   { background: #e67e22; }
+.btn-diagram { background: #8e44ad; color: white; border-color: #8e44ad; }
+.btn-diagram:hover { background: #7d3c98; }
 
 /* Forms */
 .form-group { margin-bottom: 1rem; }
@@ -54,6 +84,18 @@ main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
   padding: 0.5rem; border: 1px solid #ccc;
   border-radius: 4px; font-size: 1rem;
 }
+
+/* Tags */
+.tag {
+  display: inline-block;
+  background: #eaf2f8;
+  color: #2980b9;
+  padding: 0.15rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  margin-right: 0.3rem;
+}
+.quiz-tags { margin-bottom: 0.5rem; min-height: 1.5rem; }
 
 /* Tables */
 table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; }
@@ -67,9 +109,20 @@ tr.wrong td { color: #c0392b; }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 0.3rem;
 }
-.quiz-progress { font-size: 1.1rem; font-weight: bold; }
+.quiz-progress { font-size: 1rem; font-weight: bold; }
+
+/* 配線図ツール */
+.haisen-tools { display: flex; gap: 0.6rem; margin-bottom: 0.8rem; }
+.haisen-notes {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border: 1px solid #f0c27a;
+  border-radius: 6px;
+  background: #fef9e7;
+}
+.haisen-notes img { max-width: 100%; height: auto; }
 
 /* Question image */
 .question-image { text-align: center; margin: 1rem 0; }
@@ -79,11 +132,7 @@ tr.wrong td { color: #c0392b; }
 }
 
 /* Question text */
-.question-text {
-  margin: 1rem 0;
-  font-size: 1rem;
-  white-space: pre-wrap;
-}
+.question-text { margin: 1rem 0; font-size: 1rem; white-space: pre-wrap; }
 
 /* Choices */
 .choices {
@@ -110,10 +159,10 @@ tr.wrong td { color: #c0392b; }
 }
 .choice-btn:hover:not(:disabled) { border-color: #2980b9; background: #f0f8ff; }
 .choice-btn.selected { border-color: #2980b9; background: #d4e6f1; }
-.choice-btn.correct { border-color: #27ae60; background: #d5f5e3; }
-.choice-btn.wrong { border-color: #e74c3c; background: #fadbd8; }
+.choice-btn.correct  { border-color: #27ae60; background: #d5f5e3; }
+.choice-btn.wrong    { border-color: #e74c3c; background: #fadbd8; }
 .choice-label { font-size: 1.2rem; min-width: 1.5rem; text-align: center; }
-.choice-text { font-weight: normal; font-size: 0.95rem; }
+.choice-text  { font-weight: normal; font-size: 0.95rem; }
 
 /* Feedback */
 .feedback {
@@ -123,7 +172,7 @@ tr.wrong td { color: #c0392b; }
   font-weight: bold;
 }
 .feedback.correct { background: #d5f5e3; color: #1e8449; }
-.feedback.wrong { background: #fadbd8; color: #c0392b; }
+.feedback.wrong   { background: #fadbd8; color: #c0392b; }
 
 /* Quiz nav */
 .quiz-nav {
@@ -152,18 +201,58 @@ tr.wrong td { color: #c0392b; }
   cursor: pointer;
   user-select: none;
 }
-.q-num:hover { border-color: #2980b9; }
-.q-num.current { background: #2980b9; color: white; border-color: #2980b9; }
-.q-num.answered { background: #d5f5e3; border-color: #27ae60; }
+.q-num:hover                      { border-color: #2980b9; }
+.q-num.current                    { background: #2980b9; color: white; border-color: #2980b9; }
+.q-num.answered                   { background: #d5f5e3; border-color: #27ae60; }
+.q-num.flagged                    { border-color: #e74c3c; color: #e74c3c; font-weight: bold; }
+.q-num.flagged.answered           { background: #fadbd8; border-color: #e74c3c; color: #c0392b; }
+.q-num.flagged.current            { background: #e74c3c; color: white; border-color: #e74c3c; }
+
+/* Modal（配線図・画像ズーム共通） */
+.diagram-modal {
+  display: none;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+}
+.diagram-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  background: #222;
+  color: #eee;
+  font-size: 0.9rem;
+}
+.btn-close {
+  background: none; border: none; color: white;
+  font-size: 1.8rem; cursor: pointer; line-height: 1; padding: 0 0.3rem;
+}
+.btn-close:hover { color: #e74c3c; }
+.diagram-viewport {
+  flex: 1; overflow: hidden; cursor: grab;
+  display: flex; align-items: center; justify-content: center;
+}
+.diagram-viewport img {
+  max-width: none; max-height: none;
+  transform-origin: center center;
+  transition: transform 0.08s ease-out;
+  user-select: none; -webkit-user-drag: none;
+}
+.diagram-controls {
+  display: flex; gap: 0.6rem; align-items: center; justify-content: center;
+  padding: 0.6rem; background: #222;
+}
+.diagram-controls .btn { padding: 0.4rem 1rem; font-size: 1.1rem; }
+.diagram-controls span { color: #eee; font-size: 0.95rem; min-width: 3.5rem; text-align: center; }
 
 /* Result */
 .result-summary { text-align: center; }
 .score { font-size: 2.5rem; font-weight: bold; margin: 1rem 0 0.3rem; }
 .score-percent { font-size: 1.3rem; color: #555; }
 .result-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
+  display: flex; gap: 1rem; justify-content: center;
+  margin-top: 1.5rem; flex-wrap: wrap;
 }
