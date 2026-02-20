@@ -260,9 +260,7 @@ function renderQuestion() {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.dataset.index = i;
-    btn.innerHTML = choice
-      ? `<span class="choice-label">${labels[i]}</span><span class="choice-text">${choice}</span>`
-      : `<span class="choice-label">${labels[i]}</span>`;
+    btn.innerHTML = `<span class="choice-label">${labels[i]}</span>`;
     btn.addEventListener('click', () => selectAnswer(i));
     choicesEl.appendChild(btn);
   });
