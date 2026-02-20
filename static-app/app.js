@@ -10,6 +10,7 @@ let currentQuestions = [];
 let currentIndex = 0;
 let answers  = {};   // { qIndex: selectedChoice (0-3) }
 let lastSettings = {};
+let wrongQuestionsForRetry = [];  // finishQuiz() 時点の間違い問題リスト
 
 // ---- 配線図ビューア状態 ----
 let dgScale = 1, dgPanX = 0, dgPanY = 0;
@@ -179,9 +180,9 @@ function restartQuiz() {
 }
 
 function retryWrongOnly() {
-  const wrongQuestions = currentQuestions.filter((q, i) => answers[i] !== q.answer);
-  if (wrongQuestions.length === 0) return;
-  currentQuestions = wrongQuestions;
+  if (wrongQuestionsForRetry.length === 0) return;
+  currentQuestions = wrongQuestionsForRetry;
+  wrongQuestionsForRetry = [];
   currentIndex = 0;
   answers = {};
   showScreen('quiz');
@@ -353,7 +354,9 @@ function renderNavDots() {
 
 function finishQuiz() {
   const total = currentQuestions.length;
-  const correct = currentQuestions.filter((q, i) => answers[i] === q.answer).length;
+  // 間違い問題リストを確定（ボタン表示と完全に同じ基準）
+  wrongQuestionsForRetry = currentQuestions.filter((q, i) => answers[i] !== q.answer);
+  const correct = total - wrongQuestionsForRetry.length;
   const percent = total > 0 ? Math.round(correct / total * 100) : 0;
 
   document.getElementById('result-score').textContent = `${correct} / ${total}`;
@@ -380,8 +383,8 @@ function finishQuiz() {
     tbody.appendChild(tr);
   }
 
-  // 間違えた問題があればやり直しボタンを表示
-  const wrongCount = total - correct;
+  // 間違えた問題ボタンを表示（リストは finishQuiz() 冒頭で確定済み）
+  const wrongCount = wrongQuestionsForRetry.length;
   const btnRetry = document.getElementById('btn-retry-wrong');
   if (wrongCount > 0) {
     btnRetry.textContent = `間違えた ${wrongCount} 問をやり直す`;
