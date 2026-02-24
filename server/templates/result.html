@@ -61,12 +61,16 @@
         </tbody>
     </table>
 
+    {% set wrong_count = attempts | selectattr('is_correct', 'equalto', False) | list | length %}
     <div class="result-actions">
         <a href="{{ url_for('index') }}" class="btn">ホームに戻る</a>
+        {% if wrong_count > 0 %}
         <form action="{{ url_for('quiz_start') }}" method="post" style="display:inline">
             <input type="hidden" name="mode" value="review">
-            <button type="submit" class="btn btn-primary">間違えた問題を復習</button>
+            <input type="hidden" name="from_session_id" value="{{ quiz_session.id }}">
+            <button type="submit" class="btn btn-primary">間違えた {{ wrong_count }} 問を復習</button>
         </form>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

@@ -139,8 +139,9 @@ def register_routes(app: Flask):
             else:
                 # 全履歴から最新回答が不正解の問題
                 wrong_ids = _get_wrong_question_ids(session["user_id"])
-            if wrong_ids:
-                query = query.filter(Question.id.in_(set(wrong_ids)))
+            if not wrong_ids:
+                return redirect(url_for("index"))
+            query = query.filter(Question.id.in_(set(wrong_ids)))
 
         questions = query.all()
         if not questions:
