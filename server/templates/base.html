@@ -11,11 +11,11 @@
         <nav>
             <a href="{{ url_for('index') }}">ホーム</a>
             <a href="{{ url_for('review') }}">間違い復習</a>
-            <button id="invert-toggle" class="btn-invert" onclick="toggleInvert()">反転</button>
             {% if session.get('username') %}
             <span class="nav-user">{{ session['username'] }}</span>
             <a href="{{ url_for('logout') }}" class="nav-logout">ログアウト</a>
             {% endif %}
+            <button id="invert-toggle" class="btn-invert" onclick="toggleInvert()">反転</button>
             {% if is_exe %}
             <button class="btn-exit" onclick="confirmExit()">終了</button>
             {% endif %}

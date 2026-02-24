@@ -19,18 +19,22 @@ header {
     padding: 1rem 2rem;
 }
 
-header nav { margin-bottom: 0.5rem; }
-header nav a { color: #aed6f1; text-decoration: none; margin-right: 1.5rem; }
+header nav {
+    display: flex; align-items: center; gap: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+header nav a { color: #aed6f1; text-decoration: none; }
 header nav a:hover { color: white; }
 .btn-invert {
-    float: right; background: none; border: 1px solid #aed6f1; color: #aed6f1;
+    margin-left: auto;  /* 左側リンクと右側ボタンを分離 */
+    background: none; border: 1px solid #aed6f1; color: #aed6f1;
     padding: 0.2rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
 }
 .btn-invert:hover { background: rgba(255,255,255,0.15); color: white; }
 .btn-exit {
-    float: right; background: none; border: 1px solid #e74c3c; color: #e74c3c;
+    margin-left: 1.5rem;  /* 反転ボタンとやや離す */
+    background: none; border: 1px solid #e74c3c; color: #e74c3c;
     padding: 0.2rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
-    margin-left: 0.8rem;
 }
 .btn-exit:hover { background: rgba(231,76,60,0.2); }
 header h1 { font-size: 1.3rem; }
