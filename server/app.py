@@ -93,11 +93,13 @@ def register_routes(app: Flask):
             Question.year, Question.half
         ).distinct().order_by(Question.year.desc()).all()
 
-        # タグ一覧と分野ごとの問題数
+        # タグ一覧と分野ごとの問題数（1問を主タグ1つだけでカウント）
         tag_counts: dict[str, int] = {}
         for (tags_json,) in db.session.query(Question.tags_json).all():
-            for tag in json.loads(tags_json):
-                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+            tags_list = json.loads(tags_json)
+            if tags_list:
+                primary = tags_list[0]
+                tag_counts[primary] = tag_counts.get(primary, 0) + 1
         tags = sorted(tag_counts.keys())
 
         # 直近の成績

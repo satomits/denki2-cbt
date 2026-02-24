@@ -64,8 +64,10 @@ function buildYearHalfOptions() {
 function buildTagOptions() {
   const counts = {};
   for (const q of QUESTIONS) {
-    for (const tag of (q.tags || [])) {
-      counts[tag] = (counts[tag] || 0) + 1;
+    // 1問を主タグ（先頭）1つだけでカウント
+    if (q.tags && q.tags.length > 0) {
+      const primary = q.tags[0];
+      counts[primary] = (counts[primary] || 0) + 1;
     }
   }
   const sel = document.getElementById('sel-tag');
