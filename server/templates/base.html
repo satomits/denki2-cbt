@@ -16,6 +16,9 @@
             <span class="nav-user">{{ session['username'] }}</span>
             <a href="{{ url_for('logout') }}" class="nav-logout">ログアウト</a>
             {% endif %}
+            {% if is_exe %}
+            <button class="btn-exit" onclick="confirmExit()">終了</button>
+            {% endif %}
         </nav>
         <h1>第二種電気工事士 CBT練習</h1>
     </header>
@@ -24,6 +27,15 @@
     </main>
     {% block scripts %}{% endblock %}
     <script>
+    function confirmExit() {
+        if (confirm('練習を終了してよいですか？')) {
+            fetch('/shutdown', { method: 'POST' })
+                .finally(() => {
+                    document.body.innerHTML =
+                        '<p style="padding:2rem;font-size:1.2rem">終了しました。このウィンドウを閉じてください。</p>';
+                });
+        }
+    }
     function toggleInvert() {
         document.documentElement.classList.toggle('inverted');
         const on = document.documentElement.classList.contains('inverted');

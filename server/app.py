@@ -50,6 +50,10 @@ def create_app(test_config=None):
 
     register_routes(app)
 
+    @app.context_processor
+    def inject_is_exe():
+        return {"is_exe": bool(os.environ.get("BASE_DIR"))}
+
     return app
 
 
@@ -277,6 +281,22 @@ def register_routes(app: Flask):
             if a.question_id not in latest:
                 latest[a.question_id] = a
         return [qid for qid, a in latest.items() if not a.is_correct]
+
+    @app.route("/shutdown", methods=["POST"])
+    def shutdown():
+        """EXE モード専用: プロセスを終了する。"""
+        if not os.environ.get("BASE_DIR"):
+            return "", 403
+
+        import threading
+
+        def _exit():
+            import time
+            time.sleep(0.3)  # レスポンスを送り切ってから終了
+            os._exit(0)
+
+        threading.Thread(target=_exit, daemon=True).start()
+        return "終了します"
 
     @app.route("/review")
     @login_required

@@ -27,6 +27,12 @@ header nav a:hover { color: white; }
     padding: 0.2rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
 }
 .btn-invert:hover { background: rgba(255,255,255,0.15); color: white; }
+.btn-exit {
+    float: right; background: none; border: 1px solid #e74c3c; color: #e74c3c;
+    padding: 0.2rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+    margin-left: 0.8rem;
+}
+.btn-exit:hover { background: rgba(231,76,60,0.2); }
 header h1 { font-size: 1.3rem; }
 
 main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
