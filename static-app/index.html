@@ -27,8 +27,19 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="inp-count">出題数</label>
-          <input type="number" id="inp-count" value="30" min="1" max="200">
+          <label for="sel-tag">分野</label>
+          <select id="sel-tag">
+            <option value="">すべて</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="sel-count">出題数</label>
+          <select id="sel-count">
+            <option value="10">10問</option>
+            <option value="20">20問</option>
+            <option value="30">30問</option>
+            <option value="50" selected>50問（本番同等）</option>
+          </select>
         </div>
         <button class="btn btn-primary" onclick="startQuiz()">開始</button>
       </div>

@@ -2,6 +2,7 @@
 
 import functools
 import json
+import os
 import random
 from datetime import datetime
 from pathlib import Path
@@ -12,8 +13,24 @@ from models import JST, Attempt, Question, QuizSession, User, db
 
 
 def create_app(test_config=None):
-    app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
+    if "BASE_DIR" in os.environ:
+        # frozen exe 時: launcher.py がセットした絶対パスを使う
+        base_dir = Path(os.environ["BASE_DIR"])
+        instance_dir = base_dir / "instance"
+        instance_dir.mkdir(exist_ok=True)
+        # Windows ローカルパスを SQLite URI 形式に変換（as_posix でスラッシュ統一）
+        db_uri = f"sqlite:///{(instance_dir / 'app.db').as_posix()}"
+        flask_kwargs = {
+            "template_folder": str(base_dir / "templates"),
+            "static_folder": str(base_dir / "static"),
+        }
+    else:
+        # 通常起動時: Flask のデフォルト（instance/app.db 相対パス）をそのまま使う
+        db_uri = "sqlite:///app.db"
+        flask_kwargs = {}
+
+    app = Flask(__name__, **flask_kwargs)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = "dev"
 
@@ -32,6 +49,7 @@ def create_app(test_config=None):
                 conn.commit()
 
     register_routes(app)
+
     return app
 
 
@@ -75,11 +93,12 @@ def register_routes(app: Flask):
             Question.year, Question.half
         ).distinct().order_by(Question.year.desc()).all()
 
-        # タグ一覧
-        all_tags = set()
+        # タグ一覧と分野ごとの問題数
+        tag_counts: dict[str, int] = {}
         for (tags_json,) in db.session.query(Question.tags_json).all():
-            all_tags.update(json.loads(tags_json))
-        tags = sorted(all_tags)
+            for tag in json.loads(tags_json):
+                tag_counts[tag] = tag_counts.get(tag, 0) + 1
+        tags = sorted(tag_counts.keys())
 
         # 直近の成績
         recent_sessions = QuizSession.query.filter_by(
@@ -89,7 +108,7 @@ def register_routes(app: Flask):
         ).limit(10).all()
 
         return render_template(
-            "index.html", years=years, tags=tags, recent_sessions=recent_sessions
+            "index.html", years=years, tags=tags, tag_counts=tag_counts, recent_sessions=recent_sessions
         )
 
     @app.route("/quiz/start", methods=["POST"])
@@ -109,8 +128,22 @@ def register_routes(app: Flask):
             query = query.filter(Question.tags_json.contains(tag))
 
         if mode == "review":
-            # 最新の回答が不正解の問題のみ取得（自分の回答のみ）
-            wrong_ids = _get_wrong_question_ids(session["user_id"])
+            from_session_id = request.form.get("from_session_id", "")
+            if from_session_id:
+                # 指定セッションの間違い問題のみ
+                from_session = QuizSession.query.get(int(from_session_id))
+                if from_session and from_session.user_id == session["user_id"]:
+                    wrong_ids = [
+                        a.question_id
+                        for a in Attempt.query.filter_by(
+                            session_id=from_session.id, is_correct=False
+                        ).all()
+                    ]
+                else:
+                    wrong_ids = _get_wrong_question_ids(session["user_id"])
+            else:
+                # 全履歴から最新回答が不正解の問題
+                wrong_ids = _get_wrong_question_ids(session["user_id"])
             if wrong_ids:
                 query = query.filter(Question.id.in_(set(wrong_ids)))
 
