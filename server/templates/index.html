@@ -18,12 +18,11 @@
         </div>
 
         <div class="form-group">
-            <label>分野</label>
-            <select name="tag" id="tag-select">
-                <option value="">すべて</option>
-                {% for tag in tags %}
-                <option value="{{ tag }}" data-count="{{ tag_counts[tag] }}">{{ tag }}（{{ tag_counts[tag] }}問）</option>
-                {% endfor %}
+            <label>問題区分</label>
+            <select name="section" id="section-select">
+                <option value="">すべて（問1〜50）</option>
+                <option value="general">一般問題（問1〜30）</option>
+                <option value="haisen">配線図（問31〜50）</option>
             </select>
         </div>
 
@@ -88,27 +87,24 @@ document.getElementById('year-select').addEventListener('change', function() {
 });
 
 const countSelect = document.getElementById('count-select');
+const SECTION_MAX = { general: 30, haisen: 20 };
 
 function updateCountOptions(maxCount) {
     countSelect.innerHTML = '';
     if (!maxCount) {
-        // 分野未選択: 標準の選択肢
         for (const [v, label] of [[10,'10問'],[20,'20問'],[30,'30問'],[50,'50問（本番同等）']]) {
-            const o = new Option(label, v, false, v === 50);
-            countSelect.appendChild(o);
+            countSelect.appendChild(new Option(label, v, false, v === 50));
         }
         return;
     }
-    // 分野選択時: maxCount 以下のステップ + 全N問
-    for (const n of [5, 10, 20, 30, 50]) {
+    for (const n of [10, 20, 30]) {
         if (n < maxCount) countSelect.appendChild(new Option(`${n}問`, n));
     }
     countSelect.appendChild(new Option(`全${maxCount}問`, maxCount, true, true));
 }
 
-document.getElementById('tag-select').addEventListener('change', function() {
-    const opt = this.options[this.selectedIndex];
-    updateCountOptions(opt.value ? parseInt(opt.dataset.count) : 0);
+document.getElementById('section-select').addEventListener('change', function() {
+    updateCountOptions(SECTION_MAX[this.value] || 0);
 });
 </script>
 {% endblock %}

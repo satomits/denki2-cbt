@@ -11,7 +11,7 @@ let currentIndex = 0;
 let answers  = {};   // { qIndex: selectedChoice (0-3) }
 let lastSettings = {};
 let wrongQuestionsForRetry = [];  // finishQuiz() 時点の間違い問題リスト
-let tagCounts = {};  // { タグ名: 問題数 }
+const SECTION_MAX = { general: 30, haisen: 20 };
 
 // ---- 配線図ビューア状態 ----
 let dgScale = 1, dgPanX = 0, dgPanY = 0;
@@ -29,16 +29,14 @@ const IZ_MIN = 0.5, IZ_MAX = 5;
 
 document.addEventListener('DOMContentLoaded', () => {
   buildYearHalfOptions();
-  tagCounts = buildTagOptions();
   showHistory();
   restoreInvert();
   setupDiagramEvents();
   setupImageZoomEvents();
   setupKeyEvents();
 
-  document.getElementById('sel-tag').addEventListener('change', function() {
-    const opt = this.options[this.selectedIndex];
-    updateCountOptions(opt.value ? parseInt(opt.dataset.count) : 0);
+  document.getElementById('sel-section').addEventListener('change', function() {
+    updateCountOptions(SECTION_MAX[this.value] || 0);
   });
 });
 
@@ -61,24 +59,6 @@ function buildYearHalfOptions() {
   opts.forEach(o => sel.appendChild(o));
 }
 
-function buildTagOptions() {
-  const counts = {};
-  for (const q of QUESTIONS) {
-    // 1問を主タグ（先頭）1つだけでカウント
-    if (q.tags && q.tags.length > 0) {
-      const primary = q.tags[0];
-      counts[primary] = (counts[primary] || 0) + 1;
-    }
-  }
-  const sel = document.getElementById('sel-tag');
-  for (const tag of Object.keys(counts).sort()) {
-    const opt = new Option(`${tag}（${counts[tag]}問）`, tag);
-    opt.dataset.count = counts[tag];
-    sel.appendChild(opt);
-  }
-  return counts;
-}
-
 function updateCountOptions(maxCount) {
   const sel = document.getElementById('sel-count');
   sel.innerHTML = '';
@@ -88,7 +68,7 @@ function updateCountOptions(maxCount) {
     }
     return;
   }
-  for (const n of [5, 10, 20, 30, 50]) {
+  for (const n of [10, 20, 30]) {
     if (n < maxCount) sel.appendChild(new Option(`${n}問`, n));
   }
   sel.appendChild(new Option(`全${maxCount}問`, maxCount, true, true));
@@ -192,17 +172,19 @@ function updateFlagButton() {
 
 function startQuiz() {
   const yearHalf = document.getElementById('sel-year-half').value;
-  const tag = document.getElementById('sel-tag').value;
+  const section = document.getElementById('sel-section').value;
   const count = Math.max(1, parseInt(document.getElementById('sel-count').value, 10) || 30);
-  lastSettings = { yearHalf, tag, count };
+  lastSettings = { yearHalf, section, count };
 
   let pool = QUESTIONS.slice();
   if (yearHalf) {
     const [year, half] = yearHalf.split('_');
     pool = pool.filter(q => q.year === year && q.half === half);
   }
-  if (tag) {
-    pool = pool.filter(q => q.tags && q.tags.includes(tag));
+  if (section === 'general') {
+    pool = pool.filter(q => parseInt(q.number) <= 30);
+  } else if (section === 'haisen') {
+    pool = pool.filter(q => parseInt(q.number) >= 31);
   }
   if (pool.length === 0) { alert('該当する問題がありません。'); return; }
 
@@ -219,10 +201,8 @@ function startQuiz() {
 function restartQuiz() {
   if (lastSettings.yearHalf !== undefined) {
     document.getElementById('sel-year-half').value = lastSettings.yearHalf;
-    const tagSel = document.getElementById('sel-tag');
-    tagSel.value = lastSettings.tag || '';
-    const tagOpt = tagSel.options[tagSel.selectedIndex];
-    updateCountOptions(tagOpt.value ? parseInt(tagOpt.dataset.count) : 0);
+    document.getElementById('sel-section').value = lastSettings.section || '';
+    updateCountOptions(SECTION_MAX[lastSettings.section] || 0);
     document.getElementById('sel-count').value = lastSettings.count;
   }
   startQuiz();

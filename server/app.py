@@ -93,15 +93,6 @@ def register_routes(app: Flask):
             Question.year, Question.half
         ).distinct().order_by(Question.year.desc()).all()
 
-        # タグ一覧と分野ごとの問題数（1問を主タグ1つだけでカウント）
-        tag_counts: dict[str, int] = {}
-        for (tags_json,) in db.session.query(Question.tags_json).all():
-            tags_list = json.loads(tags_json)
-            if tags_list:
-                primary = tags_list[0]
-                tag_counts[primary] = tag_counts.get(primary, 0) + 1
-        tags = sorted(tag_counts.keys())
-
         # 直近の成績
         recent_sessions = QuizSession.query.filter_by(
             user_id=session["user_id"]
@@ -110,7 +101,7 @@ def register_routes(app: Flask):
         ).limit(10).all()
 
         return render_template(
-            "index.html", years=years, tags=tags, tag_counts=tag_counts, recent_sessions=recent_sessions
+            "index.html", years=years, recent_sessions=recent_sessions
         )
 
     @app.route("/quiz/start", methods=["POST"])
@@ -118,7 +109,7 @@ def register_routes(app: Flask):
     def quiz_start():
         year = request.form.get("year", "")
         half = request.form.get("half", "")
-        tag = request.form.get("tag", "")
+        section = request.form.get("section", "")  # "" | "general" | "haisen"
         count = int(request.form.get("count", 50))
         mode = request.form.get("mode", "normal")  # normal or review
 
@@ -126,8 +117,10 @@ def register_routes(app: Flask):
 
         if year and half:
             query = query.filter_by(year=year, half=half)
-        if tag:
-            query = query.filter(Question.tags_json.contains(tag))
+        if section == "general":
+            query = query.filter(Question.number <= 30)
+        elif section == "haisen":
+            query = query.filter(Question.number >= 31)
 
         if mode == "review":
             from_session_id = request.form.get("from_session_id", "")
@@ -157,9 +150,10 @@ def register_routes(app: Flask):
             questions = random.sample(questions, count)
 
         q_ids = [q.id for q in questions]
+        section_labels = {"general": "一般問題", "haisen": "配線図"}
         quiz_session = QuizSession(
             user_id=session["user_id"],
-            category=f"{year}_{half}" if year else tag or "all",
+            category=f"{year}_{half}" if year else section_labels.get(section, "all"),
             total_count=len(q_ids),
             question_ids_json=json.dumps(q_ids),
         )
