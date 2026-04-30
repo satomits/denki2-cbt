@@ -24,24 +24,6 @@
         </p>
     </div>
 
-    {% if tag_stats %}
-    <h3>分野別成績</h3>
-    <table>
-        <thead>
-            <tr><th>分野</th><th>正答</th><th>正答率</th></tr>
-        </thead>
-        <tbody>
-            {% for tag, stats in tag_stats.items()|sort %}
-            <tr>
-                <td>{{ tag }}</td>
-                <td>{{ stats.correct }}/{{ stats.total }}</td>
-                <td>{{ (stats.correct / stats.total * 100)|round|int if stats.total else 0 }}%</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-
     <h3>問題一覧</h3>
     <table>
         <thead>

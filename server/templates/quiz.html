@@ -9,11 +9,6 @@
             問 {{ q_index + 1 }} / {{ q_total }}
             （{{ question.year }}年 {{ "上期" if question.half == "upper" else "下期" }} 問{{ question.number }}）
         </div>
-        <div class="quiz-tags">
-            {% for tag in question.tags %}
-            <span class="tag">{{ tag }}</span>
-            {% endfor %}
-        </div>
     </div>
 
     {% if question.is_haisen %}

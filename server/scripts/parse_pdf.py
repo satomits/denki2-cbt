@@ -82,15 +82,59 @@ def deduplicate_pages(pdf) -> list[tuple[int, any]]:
     return result
 
 
+def _extract_two_column_text(page) -> str:
+    """見開き(booklet)形式のページを3領域に分けてテキストを再構成する。
+
+    booklet PDFでは1物理ページに3種の領域がある:
+      - 左隠し領域 (x < 0)          : 前スプレッドの右ページ内容
+      - 可視領域   (0 <= x < width)  : このページの本来のコンテンツ
+      - 右隠し領域 (x >= width)      : 次スプレッドの左ページ内容
+    それぞれ独立して行再構成し結合することで、異なる列の行が混入するのを防ぐ。
+    """
+    words = page.extract_words()
+    if not words:
+        return page.extract_text() or ""
+
+    split_right = page.width
+    left_hidden = [w for w in words if w["x0"] < 0]
+    visible = [w for w in words if 0 <= w["x0"] < split_right]
+    right_hidden = [w for w in words if w["x0"] >= split_right]
+
+    def words_to_text(ws: list) -> str:
+        if not ws:
+            return ""
+        ws_sorted = sorted(ws, key=lambda w: (round(w["top"] / 3), w["x0"]))
+        lines = []
+        current_line: list = []
+        current_y = None
+        for w in ws_sorted:
+            y = round(w["top"] / 3)
+            if current_y is None or y != current_y:
+                if current_line:
+                    lines.append(" ".join(ww["text"] for ww in current_line))
+                current_line = [w]
+                current_y = y
+            else:
+                current_line.append(w)
+        if current_line:
+            lines.append(" ".join(ww["text"] for ww in current_line))
+        return "\n".join(lines)
+
+    parts = [words_to_text(g) for g in [left_hidden, visible, right_hidden]]
+    return "\n\n".join(p for p in parts if p)
+
+
 def extract_questions(pdf_path: str, year: str, half: str) -> list[dict]:
     """PDF から問題を抽出する。"""
     with pdfplumber.open(pdf_path) as pdf:
         unique_pages = deduplicate_pages(pdf)
 
         # まず各ページのテキストを取得
+        # 見開き(booklet)形式: 右ページのコンテンツが x > page.width に格納されているため
+        # extract_words() で全単語を取得し、左右カラムに分けて行単位で再構成する
         page_texts: list[tuple[int, str]] = []
         for page_num, page in unique_pages:
-            text = page.extract_text() or ""
+            text = _extract_two_column_text(page)
             page_texts.append((page_num, text))
 
         # 問題セクションが始まるページを検出（「問題１」ヘッダーを探す）

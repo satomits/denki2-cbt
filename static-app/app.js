@@ -1,7 +1,7 @@
 // 静的HTML版 CBT 練習アプリ
 // 画像は ../server/static/pages/ を参照（リポジトリを clone してから開くこと）
 
-const STATIC_BASE = '../server/static/';
+const STATIC_BASE = '';
 const STORAGE_KEY = 'denki2-history';
 const FLAG_KEY    = 'denki2-flags';
 

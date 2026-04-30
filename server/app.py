@@ -33,6 +33,13 @@ def create_app(test_config=None):
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = "dev"
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "connect_args": {
+            "check_same_thread": False,  # 複数スレッドからの同時アクセスを許可
+            "timeout": 20,               # ロック待ちタイムアウト（秒）
+        },
+    }
+    app.config["IS_EXE"] = "BASE_DIR" in os.environ
 
     if test_config:
         app.config.update(test_config)
@@ -41,8 +48,8 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()
-        # 既存DBにuser_idカラムがない場合に追加
         with db.engine.connect() as conn:
+            # 既存DBにuser_idカラムがない場合に追加
             columns = [row[1] for row in conn.execute(db.text("PRAGMA table_info(quiz_sessions)"))]
             if "user_id" not in columns:
                 conn.execute(db.text("ALTER TABLE quiz_sessions ADD COLUMN user_id INTEGER REFERENCES users(id)"))
@@ -52,7 +59,7 @@ def create_app(test_config=None):
 
     @app.context_processor
     def inject_is_exe():
-        return {"is_exe": bool(os.environ.get("BASE_DIR"))}
+        return {"is_exe": app.config["IS_EXE"]}
 
     return app
 
@@ -282,10 +289,15 @@ def register_routes(app: Flask):
                 latest[a.question_id] = a
         return [qid for qid, a in latest.items() if not a.is_correct]
 
+    @app.route("/api/mode")
+    def api_mode():
+        """EXEモード判定用。is_exe が True なら EXE版として動作中。"""
+        return jsonify({"is_exe": bool(os.environ.get("BASE_DIR"))})
+
     @app.route("/shutdown", methods=["POST"])
     def shutdown():
-        """EXE モード専用: プロセスを終了する。"""
-        if not os.environ.get("BASE_DIR"):
+        """EXE モード専用: プロセスを終了する。ローカル接続のみ許可。"""
+        if request.remote_addr not in ("127.0.0.1", "::1"):
             return "", 403
 
         import threading

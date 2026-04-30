@@ -15,22 +15,36 @@
             <span class="nav-user">{{ session['username'] }}</span>
             <a href="{{ url_for('logout') }}" class="nav-logout">ログアウト</a>
             {% endif %}
+            <button id="btn-exit" class="btn-exit" onclick="confirmExit()" style="display:none">終了</button>
             <button id="invert-toggle" class="btn-invert" onclick="toggleInvert()">反転</button>
-            {% if is_exe %}
-            <button class="btn-exit" onclick="confirmExit()">終了</button>
-            {% endif %}
         </nav>
         <h1>第二種電気工事士 CBT練習</h1>
     </header>
     <main>
         {% block content %}{% endblock %}
     </main>
+    <footer>
+        <p>&copy; 2026 Kanatech College Seibu</p>
+    </footer>
     {% block scripts %}{% endblock %}
     <script>
+    // EXE版はlocalhost固定で動作するため、localhostなら終了ボタンを表示
+    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        document.getElementById('btn-exit').style.display = '';
+    }
+
     function confirmExit() {
         if (confirm('練習を終了してよいですか？')) {
+            // 先に画面を更新（サーバーが応答前に終了しても表示が変わる）
+            document.body.innerHTML =
+                '<p style="padding:2rem;font-size:1.2rem">終了中です。しばらくお待ちください...</p>';
             fetch('/shutdown', { method: 'POST' })
-                .finally(() => {
+                .then(() => {
+                    document.body.innerHTML =
+                        '<p style="padding:2rem;font-size:1.2rem">終了しました。このウィンドウを閉じてください。</p>';
+                })
+                .catch(() => {
+                    // サーバーが応答前に終了した場合もここで更新
                     document.body.innerHTML =
                         '<p style="padding:2rem;font-size:1.2rem">終了しました。このウィンドウを閉じてください。</p>';
                 });

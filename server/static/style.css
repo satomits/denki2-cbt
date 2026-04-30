@@ -32,7 +32,6 @@ header nav a:hover { color: white; }
 }
 .btn-invert:hover { background: rgba(255,255,255,0.15); color: white; }
 .btn-exit {
-    margin-left: 1.5rem;  /* 反転ボタンとやや離す */
     background: none; border: 1px solid #e74c3c; color: #e74c3c;
     padding: 0.2rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
 }
@@ -205,6 +204,16 @@ tr.wrong td:last-child { color: #e74c3c; font-weight: bold; }
 .nav-user { color: #aed6f1; margin-left: 1rem; font-size: 0.9rem; }
 .nav-logout { color: #aed6f1; text-decoration: none; margin-left: 0.5rem; font-size: 0.85rem; }
 .nav-logout:hover { color: white; }
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: #888;
+    font-size: 0.8rem;
+    border-top: 1px solid #ddd;
+    margin-top: 2rem;
+}
 
 /* Result */
 .result-summary { text-align: center; margin: 2rem 0; }
