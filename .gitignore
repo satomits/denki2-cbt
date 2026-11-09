@@ -6,3 +6,6 @@ __pycache__/
 server/data/pdfs/
 server/data/questions.jsonl
 server/instance/
+
+# Claude Code の個人設定
+.claude/settings.local.json
